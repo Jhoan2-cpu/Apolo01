@@ -1,5 +1,6 @@
 package com.apolo.tracking.presentation.login
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -22,15 +24,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.apolo.tracking.R
 import com.apolo.tracking.presentation.components.AppPasswordField
 import com.apolo.tracking.presentation.components.AppPrimaryButton
 import com.apolo.tracking.presentation.components.AppTextField
-import com.apolo.tracking.presentation.splash.ApoloLogo
 import com.apolo.tracking.ui.theme.CyanSecondary
 import com.apolo.tracking.ui.theme.RedError
 
@@ -55,7 +58,11 @@ fun LoginScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(64.dp))
-        ApoloLogo(size = 110)
+        Image(
+            painter = painterResource(id = R.drawable.ic_logo),
+            contentDescription = "Logo Apolo",
+            modifier = Modifier.size(140.dp)
+        )
         Spacer(modifier = Modifier.height(48.dp))
         AppTextField(
             value = uiState.email,
