@@ -15,9 +15,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,15 +22,21 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.apolo.tracking.presentation.components.AppPrimaryButton
 import com.apolo.tracking.presentation.components.AppTextField
 import com.apolo.tracking.presentation.components.AppTopBar
 import com.apolo.tracking.ui.theme.CyanSecondary
+import com.apolo.tracking.ui.theme.RedError
 import com.apolo.tracking.ui.theme.TextSecondary
 
 @Composable
-fun ForgotPasswordScreen(onNavigateBack: () -> Unit) {
-    var email by remember { mutableStateOf("") }
+fun ForgotPasswordScreen(
+    onNavigateBack: () -> Unit,
+    viewModel: ForgotPasswordViewModel = hiltViewModel()
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier
@@ -60,25 +63,37 @@ fun ForgotPasswordScreen(onNavigateBack: () -> Unit) {
             )
             Spacer(modifier = Modifier.height(32.dp))
             AppTextField(
-                value = email,
-                onValueChange = { email = it },
+                value = uiState.email,
+                onValueChange = viewModel::onEmailChange,
                 placeholder = "Usuario o email",
                 leadingIcon = Icons.Default.Email,
                 modifier = Modifier.fillMaxWidth(),
                 keyboardType = KeyboardType.Email
             )
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(12.dp))
+            when {
+                uiState.successMessage != null -> Text(
+                    text = uiState.successMessage!!,
+                    color = CyanSecondary,
+                    fontSize = 13.sp,
+                    textAlign = TextAlign.Center
+                )
+                uiState.errorMessage != null -> Text(
+                    text = uiState.errorMessage!!,
+                    color = RedError,
+                    fontSize = 13.sp
+                )
+            }
+            Spacer(modifier = Modifier.height(20.dp))
             AppPrimaryButton(
                 text = "Enviar",
-                onClick = {},
+                onClick = viewModel::onSendClick,
+                isLoading = uiState.isLoading,
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(16.dp))
             TextButton(onClick = onNavigateBack) {
-                Text(
-                    text = "Volver al inicio de sesión",
-                    color = CyanSecondary
-                )
+                Text(text = "Volver al inicio de sesión", color = CyanSecondary)
             }
         }
     }
