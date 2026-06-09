@@ -40,7 +40,17 @@ fun MainScreen(onLogout: () -> Unit = {}) {
             startDestination = AppRoute.Tracking.route,
             modifier = Modifier.padding(paddingValues)
         ) {
-            composable(AppRoute.Tracking.route) { TrackingScreen() }
+            composable(AppRoute.Tracking.route) {
+                TrackingScreen(
+                    onNavigateToNotifications = {
+                        navController.navigate(AppRoute.Notifications.route) {
+                            popUpTo(AppRoute.Tracking.route) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                )
+            }
             composable(AppRoute.Billing.route) { BillingScreen() }
             composable(AppRoute.Profile.route) { ProfileScreen(onLogout = onLogout) }
             composable(AppRoute.Notifications.route) { NotificationsScreen() }

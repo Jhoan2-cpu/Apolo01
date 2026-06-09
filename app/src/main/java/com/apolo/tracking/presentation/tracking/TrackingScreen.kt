@@ -16,9 +16,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -28,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -38,10 +46,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.apolo.tracking.R
 import com.apolo.tracking.domain.model.Vehicle
 import com.apolo.tracking.domain.model.VehicleStatus
-import com.apolo.tracking.presentation.components.AppTopBar
 import com.apolo.tracking.presentation.components.ErrorContent
 import com.apolo.tracking.ui.theme.BluePrimary
 import com.apolo.tracking.ui.theme.CyanSecondary
+import com.apolo.tracking.ui.theme.TextHint
 import com.apolo.tracking.ui.theme.TextSecondary
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptor
@@ -55,7 +63,10 @@ import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 
 @Composable
-fun TrackingScreen(viewModel: TrackingViewModel = hiltViewModel()) {
+fun TrackingScreen(
+    viewModel: TrackingViewModel = hiltViewModel(),
+    onNavigateToNotifications: () -> Unit = {}
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
@@ -79,7 +90,7 @@ fun TrackingScreen(viewModel: TrackingViewModel = hiltViewModel()) {
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        AppTopBar(title = "Monitorea tu Envío", onActionClick = {})
+        TrackingTopBar(onNotificationsClick = onNavigateToNotifications)
         Box(modifier = Modifier.fillMaxSize()) {
             when {
                 uiState.isLoading -> Box(
@@ -124,6 +135,13 @@ fun TrackingScreen(viewModel: TrackingViewModel = hiltViewModel()) {
                             )
                         }
                     }
+
+                    SearchBarOverlay(
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                    )
+
                     VehicleInfoCard(
                         vehicle = uiState.selectedVehicle,
                         modifier = Modifier
@@ -136,24 +154,67 @@ fun TrackingScreen(viewModel: TrackingViewModel = hiltViewModel()) {
     }
 }
 
-private fun vehicleIcon(context: Context, resId: Int, density: Float): BitmapDescriptor {
-    val src = BitmapFactory.decodeResource(context.resources, resId)
-    // Scale maintaining aspect ratio, target 48dp on the longer side
-    val targetPx = (48 * density).toInt()
-    val (w, h) = if (src.width >= src.height) {
-        targetPx to (targetPx * src.height / src.width)
-    } else {
-        (targetPx * src.width / src.height) to targetPx
+@Composable
+private fun TrackingTopBar(onNotificationsClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(BluePrimary)
+            .padding(horizontal = 4.dp, vertical = 10.dp)
+    ) {
+        IconButton(
+            onClick = {},
+            modifier = Modifier.align(Alignment.CenterStart)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Menu,
+                contentDescription = "Menú",
+                tint = Color.White
+            )
+        }
+        Text(
+            text = "Monitorea tu Envío",
+            color = Color.White,
+            fontWeight = FontWeight.Bold,
+            fontSize = 18.sp,
+            modifier = Modifier.align(Alignment.Center)
+        )
+        IconButton(
+            onClick = onNotificationsClick,
+            modifier = Modifier.align(Alignment.CenterEnd)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Notifications,
+                contentDescription = "Notificaciones",
+                tint = Color.White
+            )
+        }
     }
-    val scaled = Bitmap.createScaledBitmap(src, w, h, true)
-    src.recycle()
-    // PNG points DOWN; rotate -90° so the base direction is RIGHT
-    val rotated = Bitmap.createBitmap(
-        scaled, 0, 0, scaled.width, scaled.height,
-        Matrix().apply { postRotate(-90f) }, true
-    )
-    scaled.recycle()
-    return BitmapDescriptorFactory.fromBitmap(rotated)
+}
+
+@Composable
+private fun SearchBarOverlay(modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .shadow(4.dp, RoundedCornerShape(28.dp))
+            .background(Color.White, RoundedCornerShape(28.dp))
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Search,
+            contentDescription = null,
+            tint = TextSecondary,
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = "Buscar envío...",
+            color = TextHint,
+            fontSize = 14.sp
+        )
+    }
 }
 
 @Composable
@@ -163,10 +224,15 @@ private fun VehicleInfoCard(vehicle: Vehicle?, modifier: Modifier = Modifier) {
         VehicleStatus.RED -> Color(0xFFF44336)
         else -> Color(0xFF9E9E9E)
     }
+    val statusLabel = when (vehicle?.status) {
+        VehicleStatus.GREEN -> "En Tránsito"
+        VehicleStatus.RED -> "Detenido"
+        else -> "Desconocido"
+    }
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
@@ -178,16 +244,24 @@ private fun VehicleInfoCard(vehicle: Vehicle?, modifier: Modifier = Modifier) {
         ) {
             Box(
                 modifier = Modifier
-                    .size(12.dp)
-                    .background(statusColor, CircleShape)
-            )
+                    .size(44.dp)
+                    .background(statusColor.copy(alpha = 0.12f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.DirectionsCar,
+                    contentDescription = null,
+                    tint = statusColor,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = vehicle?.plate ?: "—",
                     fontWeight = FontWeight.Bold,
                     color = BluePrimary,
-                    fontSize = 16.sp
+                    fontSize = 17.sp
                 )
                 Text(
                     text = vehicle?.speed ?: "—",
@@ -195,16 +269,36 @@ private fun VehicleInfoCard(vehicle: Vehicle?, modifier: Modifier = Modifier) {
                     fontSize = 13.sp
                 )
             }
-            Text(
-                text = when (vehicle?.status) {
-                    VehicleStatus.GREEN -> "En Tránsito"
-                    VehicleStatus.RED -> "Detenido"
-                    else -> "Desconocido"
-                },
-                color = CyanSecondary,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 13.sp
-            )
+            Box(
+                modifier = Modifier
+                    .background(statusColor.copy(alpha = 0.12f), RoundedCornerShape(20.dp))
+                    .padding(horizontal = 10.dp, vertical = 5.dp)
+            ) {
+                Text(
+                    text = statusLabel,
+                    color = statusColor,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 12.sp
+                )
+            }
         }
     }
+}
+
+private fun vehicleIcon(context: Context, resId: Int, density: Float): BitmapDescriptor {
+    val src = BitmapFactory.decodeResource(context.resources, resId)
+    val targetPx = (48 * density).toInt()
+    val (w, h) = if (src.width >= src.height) {
+        targetPx to (targetPx * src.height / src.width)
+    } else {
+        (targetPx * src.width / src.height) to targetPx
+    }
+    val scaled = Bitmap.createScaledBitmap(src, w, h, true)
+    src.recycle()
+    val rotated = Bitmap.createBitmap(
+        scaled, 0, 0, scaled.width, scaled.height,
+        Matrix().apply { postRotate(-90f) }, true
+    )
+    scaled.recycle()
+    return BitmapDescriptorFactory.fromBitmap(rotated)
 }
