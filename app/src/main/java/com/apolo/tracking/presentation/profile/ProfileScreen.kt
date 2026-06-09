@@ -51,7 +51,7 @@ fun ProfileScreen(onLogout: () -> Unit = {}) {
             .fillMaxSize()
             .background(SurfaceLight)
     ) {
-        AppTopBar(title = "Perfil de Usuario")
+        AppTopBar(title = "Perfil de Usuario", onLogout = onLogout)
         Column(
             modifier = Modifier
                 .fillMaxSize()

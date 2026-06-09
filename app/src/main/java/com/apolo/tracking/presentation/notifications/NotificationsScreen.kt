@@ -47,7 +47,10 @@ import com.apolo.tracking.ui.theme.PurpleTertiary
 import com.apolo.tracking.ui.theme.RedError
 
 @Composable
-fun NotificationsScreen(viewModel: NotificationsViewModel = hiltViewModel()) {
+fun NotificationsScreen(
+    viewModel: NotificationsViewModel = hiltViewModel(),
+    onLogout: () -> Unit = {}
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Column(
@@ -55,7 +58,7 @@ fun NotificationsScreen(viewModel: NotificationsViewModel = hiltViewModel()) {
             .fillMaxSize()
             .background(Color.White)
     ) {
-        AppTopBar(title = "Notificaciones")
+        AppTopBar(title = "Notificaciones", onLogout = onLogout)
         Box(modifier = Modifier.fillMaxSize()) {
             when {
                 uiState.isLoading -> Box(

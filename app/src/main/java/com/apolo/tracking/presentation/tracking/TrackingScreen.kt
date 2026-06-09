@@ -18,12 +18,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DirectionsCar
-import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -42,6 +40,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.apolo.tracking.R
 import com.apolo.tracking.domain.model.Vehicle
 import com.apolo.tracking.domain.model.VehicleStatus
+import com.apolo.tracking.presentation.components.AppTopBar
 import com.apolo.tracking.presentation.components.ErrorContent
 import com.apolo.tracking.ui.theme.BluePrimary
 import com.apolo.tracking.ui.theme.TextSecondary
@@ -77,7 +76,7 @@ fun TrackingScreen(
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        TrackingTopBar(onLogout = onLogout)
+        AppTopBar(title = "Monitorea tu Envío", onLogout = onLogout)
         Box(modifier = Modifier.fillMaxSize()) {
             when {
                 uiState.isLoading -> Box(
@@ -195,30 +194,6 @@ private fun VehicleMarkerContent(
             fontWeight = FontWeight.Medium,
             fontSize = 11.sp
         )
-    }
-}
-
-@Composable
-private fun TrackingTopBar(onLogout: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(BluePrimary)
-            .padding(horizontal = 4.dp, vertical = 10.dp)
-    ) {
-        Text(
-            text = "Monitorea tu Envío",
-            color = Color.White,
-            fontWeight = FontWeight.Bold,
-            fontSize = 18.sp,
-            modifier = Modifier.align(Alignment.Center)
-        )
-        IconButton(
-            onClick = onLogout,
-            modifier = Modifier.align(Alignment.CenterEnd)
-        ) {
-            Icon(imageVector = Icons.Filled.Logout, contentDescription = "Cerrar sesión", tint = Color.White)
-        }
     }
 }
 

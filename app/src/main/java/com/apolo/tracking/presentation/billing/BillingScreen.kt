@@ -63,13 +63,13 @@ private val pendingCount = mockInvoices.count { !it.isPaid }
 private val paidCount    = mockInvoices.count { it.isPaid }
 
 @Composable
-fun BillingScreen() {
+fun BillingScreen(onLogout: () -> Unit = {}) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(SurfaceLight)
     ) {
-        AppTopBar(title = "Billings")
+        AppTopBar(title = "Billings", onLogout = onLogout)
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(12.dp)

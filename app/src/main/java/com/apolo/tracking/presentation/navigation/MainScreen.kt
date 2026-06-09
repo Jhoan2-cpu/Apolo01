@@ -43,9 +43,9 @@ fun MainScreen(onLogout: () -> Unit = {}) {
             composable(AppRoute.Tracking.route) {
                 TrackingScreen(onLogout = onLogout)
             }
-            composable(AppRoute.Billing.route) { BillingScreen() }
+            composable(AppRoute.Billing.route) { BillingScreen(onLogout = onLogout) }
             composable(AppRoute.Profile.route) { ProfileScreen(onLogout = onLogout) }
-            composable(AppRoute.Notifications.route) { NotificationsScreen() }
+            composable(AppRoute.Notifications.route) { NotificationsScreen(onLogout = onLogout) }
         }
     }
 }

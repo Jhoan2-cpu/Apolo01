@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -45,8 +44,7 @@ fun ForgotPasswordScreen(
     ) {
         AppTopBar(
             title = "Recuperar Contraseña",
-            actionIcon = Icons.AutoMirrored.Filled.ArrowBack,
-            onActionClick = onNavigateBack
+            onNavigateBack = onNavigateBack
         )
         Column(
             modifier = Modifier
