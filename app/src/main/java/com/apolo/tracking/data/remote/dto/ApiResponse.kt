@@ -2,7 +2,8 @@ package com.apolo.tracking.data.remote.dto
 
 import com.google.gson.annotations.SerializedName
 
-data class ForgotPasswordResponseDto(
+data class ApiResponse<T>(
     @SerializedName("success") val success: Boolean,
-    @SerializedName("message") val message: String
+    @SerializedName("message") val message: String,
+    @SerializedName("data") val data: T?
 )
