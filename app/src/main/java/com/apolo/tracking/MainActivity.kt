@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import com.apolo.tracking.presentation.navigation.AppNavGraph
 import com.apolo.tracking.ui.theme.ApoloTheme
 
 class MainActivity : ComponentActivity() {
@@ -12,7 +13,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             ApoloTheme {
-                // Navigation will be wired here in a later prompt
+                AppNavGraph()
             }
         }
     }
