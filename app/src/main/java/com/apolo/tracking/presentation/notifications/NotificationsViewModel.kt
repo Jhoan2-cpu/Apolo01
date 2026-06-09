@@ -3,6 +3,7 @@ package com.apolo.tracking.presentation.notifications
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.apolo.tracking.domain.usecase.GetNotificationsUseCase
+import com.apolo.tracking.presentation.util.toFriendlyMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,7 +34,7 @@ class NotificationsViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        errorMessage = e.message ?: "Error al cargar notificaciones"
+                        errorMessage = e.toFriendlyMessage()
                     )
                 }
             }

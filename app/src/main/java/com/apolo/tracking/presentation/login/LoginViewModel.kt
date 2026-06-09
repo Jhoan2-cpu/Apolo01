@@ -3,6 +3,7 @@ package com.apolo.tracking.presentation.login
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.apolo.tracking.domain.usecase.LoginUseCase
+import com.apolo.tracking.presentation.util.toFriendlyMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -43,7 +44,7 @@ class LoginViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        errorMessage = e.message ?: "Error al iniciar sesión"
+                        errorMessage = e.toFriendlyMessage()
                     )
                 }
             }

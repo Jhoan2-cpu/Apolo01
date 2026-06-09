@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.apolo.tracking.domain.model.Vehicle
 import com.apolo.tracking.domain.usecase.GetVehiclesUseCase
+import com.apolo.tracking.presentation.util.toFriendlyMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -40,7 +41,7 @@ class TrackingViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        errorMessage = e.message ?: "Error al cargar los vehículos"
+                        errorMessage = e.toFriendlyMessage()
                     )
                 }
             }
