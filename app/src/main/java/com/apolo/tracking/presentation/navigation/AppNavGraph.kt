@@ -1,6 +1,7 @@
 package com.apolo.tracking.presentation.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -11,6 +12,7 @@ import com.apolo.tracking.presentation.splash.SplashScreen
 @Composable
 fun AppNavGraph() {
     val navController = rememberNavController()
+    val appViewModel: AppViewModel = hiltViewModel()
 
     NavHost(
         navController = navController,
@@ -48,8 +50,9 @@ fun AppNavGraph() {
         composable(AppRoute.Main.route) {
             MainScreen(
                 onLogout = {
+                    appViewModel.logout()
                     navController.navigate(AppRoute.Login.route) {
-                        popUpTo(AppRoute.Main.route) { inclusive = true }
+                        popUpTo(navController.graph.id) { inclusive = true }
                     }
                 }
             )
