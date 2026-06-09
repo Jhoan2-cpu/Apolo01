@@ -24,55 +24,69 @@ import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.apolo.tracking.domain.model.NotificationItem
 import com.apolo.tracking.presentation.components.AppTopBar
+import com.apolo.tracking.presentation.components.EmptyContent
+import com.apolo.tracking.presentation.components.ErrorContent
+import com.apolo.tracking.ui.theme.BluePrimary
 import com.apolo.tracking.ui.theme.CyanSecondary
 import com.apolo.tracking.ui.theme.PurpleTertiary
 import com.apolo.tracking.ui.theme.RedError
 
-private data class MockNotification(
-    val invoiceNumber: String,
-    val status: String,
-    val date: String
-)
-
-private val mockNotifications = listOf(
-    MockNotification("001-000001", "En Origen", "2026-04-02 08:00:00"),
-    MockNotification("001-000001", "En Tránsito", "2026-04-02 08:00:00"),
-    MockNotification("001-000001", "En Domicilio", "2026-04-02 08:00:00"),
-    MockNotification("001-000001", "Entregado", "2026-04-02 08:00:00"),
-)
-
 @Composable
-fun NotificationsScreen() {
+fun NotificationsScreen(viewModel: NotificationsViewModel = hiltViewModel()) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
     ) {
-        AppTopBar(title = "Notificaciones", onActionClick = {})
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            items(mockNotifications) { item ->
-                NotificationCard(item)
+        AppTopBar(title = "Notificaciones")
+        Box(modifier = Modifier.fillMaxSize()) {
+            when {
+                uiState.isLoading -> Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = BluePrimary)
+                }
+                uiState.errorMessage != null -> ErrorContent(
+                    message = uiState.errorMessage!!,
+                    onRetry = viewModel::loadNotifications
+                )
+                uiState.notifications.isEmpty() -> EmptyContent(
+                    message = "No hay notificaciones"
+                )
+                else -> LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(uiState.notifications, key = { it.id }) { item ->
+                        NotificationCard(item)
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-private fun NotificationCard(item: MockNotification) {
+private fun NotificationCard(item: NotificationItem) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -113,7 +127,7 @@ private fun NotificationCard(item: MockNotification) {
                         modifier = Modifier.size(15.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = item.date, color = CyanSecondary, fontSize = 12.sp)
+                    Text(text = item.createdAt, color = CyanSecondary, fontSize = 12.sp)
                 }
             }
             Spacer(modifier = Modifier.width(12.dp))
