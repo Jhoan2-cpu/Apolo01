@@ -19,18 +19,29 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.apolo.tracking.ui.theme.BluePrimary
 import com.apolo.tracking.ui.theme.CyanSecondary
 import com.apolo.tracking.ui.theme.PurpleTertiary
 import com.apolo.tracking.ui.theme.TextSecondary
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 
 @Composable
-fun SplashScreen(onNavigateToLogin: () -> Unit) {
+fun SplashScreen(
+    onNavigateToLogin: () -> Unit,
+    onNavigateToMain: () -> Unit,
+    viewModel: SplashViewModel = hiltViewModel()
+) {
     LaunchedEffect(Unit) {
-        delay(1500L)
-        onNavigateToLogin()
+        val minDelay = async { delay(1500L) }
+        val sessionCheck = async { viewModel.isSessionActive.filterNotNull().first() }
+        minDelay.await()
+        if (sessionCheck.await()) onNavigateToMain() else onNavigateToLogin()
     }
+
     Box(
         modifier = Modifier
             .fillMaxSize()

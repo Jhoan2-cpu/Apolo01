@@ -24,6 +24,11 @@ fun AppNavGraph() {
                     navController.navigate(AppRoute.Login.route) {
                         popUpTo(AppRoute.Splash.route) { inclusive = true }
                     }
+                },
+                onNavigateToMain = {
+                    navController.navigate(AppRoute.Main.route) {
+                        popUpTo(AppRoute.Splash.route) { inclusive = true }
+                    }
                 }
             )
         }
