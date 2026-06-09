@@ -1,26 +1,24 @@
 package com.apolo.tracking.presentation.tracking
 
-import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Matrix
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DirectionsCar
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -30,14 +28,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -48,30 +44,21 @@ import com.apolo.tracking.domain.model.Vehicle
 import com.apolo.tracking.domain.model.VehicleStatus
 import com.apolo.tracking.presentation.components.ErrorContent
 import com.apolo.tracking.ui.theme.BluePrimary
-import com.apolo.tracking.ui.theme.CyanSecondary
-import com.apolo.tracking.ui.theme.TextHint
 import com.apolo.tracking.ui.theme.TextSecondary
 import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.model.BitmapDescriptor
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.MapEffect
-import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerComposable
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 
 @Composable
 fun TrackingScreen(
     viewModel: TrackingViewModel = hiltViewModel(),
-    onNavigateToNotifications: () -> Unit = {}
+    onLogout: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val context = LocalContext.current
-
-    var greenIcon by remember { mutableStateOf<BitmapDescriptor?>(null) }
-    var redIcon by remember { mutableStateOf<BitmapDescriptor?>(null) }
 
     val defaultPosition = LatLng(-12.059482, -77.032028)
     val cameraPositionState = rememberCameraPositionState {
@@ -90,7 +77,7 @@ fun TrackingScreen(
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        TrackingTopBar(onNotificationsClick = onNavigateToNotifications)
+        TrackingTopBar(onLogout = onLogout)
         Box(modifier = Modifier.fillMaxSize()) {
             when {
                 uiState.isLoading -> Box(
@@ -108,39 +95,33 @@ fun TrackingScreen(
                         modifier = Modifier.fillMaxSize(),
                         cameraPositionState = cameraPositionState
                     ) {
-                        MapEffect(Unit) { _ ->
-                            val density = context.resources.displayMetrics.density
-                            greenIcon = vehicleIcon(context, R.drawable.ic_vehicle_green, density)
-                            redIcon = vehicleIcon(context, R.drawable.ic_vehicle_red, density)
-                        }
-
                         uiState.vehicles.forEach { vehicle ->
-                            Marker(
+                            val statusColor = vehicle.statusColor
+                            val iconRes = when (vehicle.status) {
+                                VehicleStatus.RED -> R.drawable.ic_vehicle_red
+                                else              -> R.drawable.ic_vehicle_green
+                            }
+                            MarkerComposable(
+                                keys = arrayOf(vehicle),
                                 state = MarkerState(
                                     position = LatLng(vehicle.latitude, vehicle.longitude)
                                 ),
-                                icon = when (vehicle.status) {
-                                    VehicleStatus.GREEN -> greenIcon
-                                    VehicleStatus.RED -> redIcon
-                                    VehicleStatus.UNKNOWN -> greenIcon
-                                },
-                                title = vehicle.plate,
-                                snippet = vehicle.speed,
-                                rotation = -vehicle.angle,
-                                flat = true,
+                                anchor = Offset(0.5f, 0.3f),
                                 onClick = {
                                     viewModel.selectVehicle(vehicle)
                                     false
                                 }
-                            )
+                            ) {
+                                VehicleMarkerContent(
+                                    plate = vehicle.plate,
+                                    speed = vehicle.speed,
+                                    angle = vehicle.angle,
+                                    statusColor = statusColor,
+                                    iconRes = iconRes
+                                )
+                            }
                         }
                     }
-
-                    SearchBarOverlay(
-                        modifier = Modifier
-                            .align(Alignment.TopCenter)
-                            .padding(horizontal = 16.dp, vertical = 12.dp)
-                    )
 
                     if (uiState.vehicles.isEmpty()) {
                         Card(
@@ -174,23 +155,57 @@ fun TrackingScreen(
 }
 
 @Composable
-private fun TrackingTopBar(onNotificationsClick: () -> Unit) {
+private fun VehicleMarkerContent(
+    plate: String,
+    speed: String,
+    angle: Float,
+    statusColor: Color,
+    iconRes: Int
+) {
+    Column(
+        modifier = Modifier.wrapContentSize(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Image(
+            painter = painterResource(id = iconRes),
+            contentDescription = null,
+            modifier = Modifier
+                .size(64.dp)
+                // PNG points DOWN; -90 turns it RIGHT, then -angle applies heading
+                .rotate(-90f - angle)
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Box(
+            modifier = Modifier
+                .background(Color.White, RoundedCornerShape(50.dp))
+                .border(2.dp, statusColor, RoundedCornerShape(50.dp))
+                .padding(horizontal = 12.dp, vertical = 5.dp)
+        ) {
+            Text(
+                text = plate,
+                color = statusColor,
+                fontWeight = FontWeight.Bold,
+                fontSize = 13.sp
+            )
+        }
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = speed,
+            color = statusColor,
+            fontWeight = FontWeight.Medium,
+            fontSize = 11.sp
+        )
+    }
+}
+
+@Composable
+private fun TrackingTopBar(onLogout: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .background(BluePrimary)
             .padding(horizontal = 4.dp, vertical = 10.dp)
     ) {
-        IconButton(
-            onClick = {},
-            modifier = Modifier.align(Alignment.CenterStart)
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Menu,
-                contentDescription = "Menú",
-                tint = Color.White
-            )
-        }
         Text(
             text = "Monitorea tu Envío",
             color = Color.White,
@@ -199,54 +214,21 @@ private fun TrackingTopBar(onNotificationsClick: () -> Unit) {
             modifier = Modifier.align(Alignment.Center)
         )
         IconButton(
-            onClick = onNotificationsClick,
+            onClick = onLogout,
             modifier = Modifier.align(Alignment.CenterEnd)
         ) {
-            Icon(
-                imageVector = Icons.Filled.Notifications,
-                contentDescription = "Notificaciones",
-                tint = Color.White
-            )
+            Icon(imageVector = Icons.Filled.Logout, contentDescription = "Cerrar sesión", tint = Color.White)
         }
     }
 }
 
 @Composable
-private fun SearchBarOverlay(modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .shadow(4.dp, RoundedCornerShape(28.dp))
-            .background(Color.White, RoundedCornerShape(28.dp))
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = Icons.Filled.Search,
-            contentDescription = null,
-            tint = TextSecondary,
-            modifier = Modifier.size(20.dp)
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = "Buscar envío...",
-            color = TextHint,
-            fontSize = 14.sp
-        )
-    }
-}
-
-@Composable
 private fun VehicleInfoCard(vehicle: Vehicle?, modifier: Modifier = Modifier) {
-    val statusColor = when (vehicle?.status) {
-        VehicleStatus.GREEN -> Color(0xFF4CAF50)
-        VehicleStatus.RED -> Color(0xFFF44336)
-        else -> Color(0xFF9E9E9E)
-    }
+    val statusColor = vehicle?.statusColor ?: Color(0xFF9E9E9E)
     val statusLabel = when (vehicle?.status) {
         VehicleStatus.GREEN -> "En Tránsito"
-        VehicleStatus.RED -> "Detenido"
-        else -> "Desconocido"
+        VehicleStatus.RED   -> "Detenido"
+        else                -> "Desconocido"
     }
 
     Card(
@@ -282,11 +264,7 @@ private fun VehicleInfoCard(vehicle: Vehicle?, modifier: Modifier = Modifier) {
                     color = BluePrimary,
                     fontSize = 17.sp
                 )
-                Text(
-                    text = vehicle?.speed ?: "—",
-                    color = TextSecondary,
-                    fontSize = 13.sp
-                )
+                Text(text = vehicle?.speed ?: "—", color = TextSecondary, fontSize = 13.sp)
             }
             Box(
                 modifier = Modifier
@@ -304,20 +282,9 @@ private fun VehicleInfoCard(vehicle: Vehicle?, modifier: Modifier = Modifier) {
     }
 }
 
-private fun vehicleIcon(context: Context, resId: Int, density: Float): BitmapDescriptor {
-    val src = BitmapFactory.decodeResource(context.resources, resId)
-    val targetPx = (48 * density).toInt()
-    val (w, h) = if (src.width >= src.height) {
-        targetPx to (targetPx * src.height / src.width)
-    } else {
-        (targetPx * src.width / src.height) to targetPx
+private val Vehicle.statusColor: Color
+    get() = when (status) {
+        VehicleStatus.GREEN -> Color(0xFF4CAF50)
+        VehicleStatus.RED   -> Color(0xFFF44336)
+        else                -> Color(0xFF9E9E9E)
     }
-    val scaled = Bitmap.createScaledBitmap(src, w, h, true)
-    src.recycle()
-    val rotated = Bitmap.createBitmap(
-        scaled, 0, 0, scaled.width, scaled.height,
-        Matrix().apply { postRotate(-90f) }, true
-    )
-    scaled.recycle()
-    return BitmapDescriptorFactory.fromBitmap(rotated)
-}
